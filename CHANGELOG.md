@@ -1,4 +1,4 @@
-## <version> - <date>
+## <1.0.0> - <2024-03-27>
 
 ### Sprint learnings
 
@@ -8,16 +8,16 @@ Entender el funcionamiento de node y mondoDB (BEGGINER).
 
 ### Added
 
-En esta sección especifica las funcionalides que agregaste.
+N/A
 
 ### Changed
 
-En esta sección detalla los cambios que hiciste a funcionalides ya existentes.
+N/A
 
 ### Fixed
 
-En esta sección describe los _bugs_ solucionados.
+N/A
 
 ### Removed
 
-En esta sección incluye las funcionalidades eliminadas.
+N/A
