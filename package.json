@@ -8,7 +8,7 @@
   },
   "scripts": {
     "pretest": "eslint .",
-    "start": "node index.js",
+    "start": "nodemon index.js",
     "test:e2e": "jest --verbose --testPathPattern e2e --globalSetup ./e2e/globalSetup --globalTeardown ./e2e/globalTeardown --runInBand",
     "test:unit": "jest --verbose --testPathIgnorePatterns e2e",
     "test": "npm run test:e2e && npm run test:unit",
@@ -35,6 +35,7 @@
     "jsdoc": "^3.6.6",
     "jsdoc-http-plugin": "^0.3.2",
     "node-fetch": "^3.1.0",
+    "nodemon": "^3.1.0",
     "tree-kill": "^1.2.2"
   },
   "bootcamp": {
