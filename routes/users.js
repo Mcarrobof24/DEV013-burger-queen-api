@@ -1,4 +1,5 @@
 const bcrypt = require('bcrypt');
+const {connect} = require('../connect');
 
 const {
   requireAuth,
@@ -9,17 +10,44 @@ const {
   getUsers,
 } = require('../controller/users');
 
-const initAdminUser = (app, next) => {
+
+const initAdminUser = async (app, next) => {
   const { adminEmail, adminPassword } = app.get('config');
   if (!adminEmail || !adminPassword) {
     return next();
   }
+  try{
+    //Obtener la conexion con la base de datos
+    const db = await connect();
+    // Conecto a la coleccion user
+    const collection = db.collection('users');
+   //Busco por el email si existe ese administrador
+    const adminUserExists = await collection.findOne({ email: adminEmail});
+    console.log(adminUserExists);
+    //Chequear si el usuario existe en la coleccion de la base de datos
+    if(!adminUserExists){
+      //si no existe le asignamos las propiedades 
+      const adminUser = {
+        email: adminEmail,
+        password: bcrypt.hashSync(adminPassword, 10),
+        roles: "admin",
+      };
+      //Insertamos el usuario admin en la coleccion
+      await collection.insertOne(adminUser);
+      console.log('Usuario admin creado con exito');   
+    }else{
+      console.log('Usuario admin ya existe en la base de datos');
+    }
+  }catch(error){
+    console.log(error);
+  }
+  
 
-  const adminUser = {
+  /*const adminUser = {
     email: adminEmail,
     password: bcrypt.hashSync(adminPassword, 10),
     roles: "admin",
-  };
+  };*/
 
   // TODO: Create admin user
   // First, check if adminUser already exists in the database
