@@ -7,7 +7,7 @@ const mongoGlobalSetup = require("@shelf/jest-mongodb/lib/setup");
 
 const config = require('../config');
 
-const port = process.env.PORT || 8888;
+const port = process.env.PORT || 8080;
 const baseUrl = process.env.REMOTE_URL || `http://127.0.0.1:${port}`;
 
 const __e2e = {
