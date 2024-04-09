@@ -29,16 +29,16 @@ module.exports = (app, nextMain) => {
       }
       //Verificar si la contraseña coincide con la base de datos
       const passwordMatch = await bcrypt.compare(password, user.password);
-      console.log(password, user.password);
+      //console.log(password, user.password);
       
-      console.log('verifica', passwordMatch);
+      //console.log('verifica', passwordMatch);
       if (!passwordMatch){
         return resp.status(401).json({error: 'Contraseña incorrecta'});
       }else{
           //Si las crendenciales son correctas, generar un token JWT
         const token = jwt.sign({ id: user._id, 
           email: user.email, 
-          roles: user.role}, 
+          roles: user.roles}, 
           secret, 
           {expiresIn: '1h'});
       
