@@ -1,4 +1,5 @@
 const { connect } = require ("../connect");
+const { ObjectId } = require ("mongodb");
 
 module.exports = {
 
@@ -23,4 +24,37 @@ module.exports = {
        return resp.status(500).json({message: 'Error del servidor'});
     }
   },
+  
+  createUser: async(req, resp) =>{
+    try{
+      const { email, password, roles } = req.body;
+      const db= await connect();
+      const collection = db.collection("users");
+      const rolesApi= ["admin", "waiter", "chef"];
+
+      //Comprobar que el usuario ingrese los datos completos
+      if(!email || !password){
+        return resp.status(400).json({message:'Ingrese los datos completos'});
+      }
+
+      //Comprobar si el usuario ya esta registrado
+      const existUser= await collection.findOne({email: email});
+      console.log("usuario existente:", existUser);
+      if(existUser){
+        return resp.status(403).json({message:"El usuario ya se encuentra registrado"});
+      }
+
+      //Crear nuevo usuario
+      const createNewUser= await collection.insertOne(req.body);
+      console.log('Nuevo usuario registrado:', createNewUser);
+      return resp.status(200).json({message: "Usuario registrado con exito"});
+
+    }
+    catch(error){
+      return resp.status(500).json({message: 'Error del servidor'});
+    }
+  }
+  
 };
+
+//Validar el email
