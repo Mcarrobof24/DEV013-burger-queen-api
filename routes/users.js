@@ -23,7 +23,7 @@ const initAdminUser = async (app, next) => {
     const collection = db.collection('users');
    //Busco por el email si existe ese administrador
     const adminUserExists = await collection.findOne({ email: adminEmail});
-    console.log(adminUserExists);
+    //console.log(adminUserExists);
     //Chequear si el usuario existe en la coleccion de la base de datos
     if(!adminUserExists){
       //si no existe le asignamos las propiedades 
