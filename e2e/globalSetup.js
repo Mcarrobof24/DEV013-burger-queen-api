@@ -7,7 +7,7 @@ const mongoGlobalSetup = require("@shelf/jest-mongodb/lib/setup");
 
 const config = require('../config');
 
-const port = process.env.PORT || 8080;
+const port = process.env.PORT || 8888;
 const baseUrl = process.env.REMOTE_URL || `http://127.0.0.1:${port}`;
 
 const __e2e = {
@@ -21,7 +21,7 @@ const __e2e = {
   testUserCredentials: {
     email: 'test@test.test',
     password: '123456',
-    role: 'chef',
+    roles: 'chef',
   },
   testUserToken: null,
   childProcessPid: null,
@@ -53,17 +53,27 @@ const fetchWithAuth = (token) => (url, opts = {}) => fetch(url, {
   },
 });
 
-const fetchAsAdmin = (url, opts) => fetchWithAuth(__e2e.adminToken)(url, opts);
+const fetchAsAdmin = (url, opts) => {
+  console.log(fetchAsAdmin);
+  return fetchWithAuth(__e2e.adminToken)(url, opts)
+};
 const fetchAsTestUser = (url, opts) => fetchWithAuth(__e2e.testUserToken)(url, opts);
 
 const createTestUser = () => fetchAsAdmin('/users', {
   method: 'POST',
   body: __e2e.testUserCredentials,
 })
-  .then((resp) => {
-    if (resp.status !== 200) {
-      throw new Error(`Error: Could not create test user - response ${resp.status}`);
+  .then(
+    (resp)=>{
+      if (resp.status !== 200) {
+        throw new Error(`Error: Could not create test user - response ${resp.status}`);
+      }
+      return resp.json();
     }
+  )
+  .then((resp) => {
+    console.log(resp);
+    
     return fetch('/login', { method: 'POST', body: __e2e.testUserCredentials });
   })
   .then((resp) => {

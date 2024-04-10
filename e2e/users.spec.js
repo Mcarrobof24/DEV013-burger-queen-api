@@ -113,7 +113,7 @@ describe('POST /users', () => {
       body: {
         email: 'test1@test.test',
         password: '12345',
-        role: "waiter",
+        roles: "waiter",
       },
     })
       .then((resp) => {
@@ -124,8 +124,8 @@ describe('POST /users', () => {
         expect(typeof json._id).toBe('string');
         expect(typeof json.email).toBe('string');
         expect(typeof json.password).toBe('undefined');
-        expect(typeof json.role).toBe('string');
-        expect(json.role).toBe("waiter");
+        expect(typeof json.roles).toBe('string');
+        expect(json.roles).toBe("waiter");
       })
   ));
 
@@ -135,7 +135,7 @@ describe('POST /users', () => {
       body: {
         email: 'admin1@test.test',
         password: '12345',
-        role: "admin",
+        roles: "admin",
       },
     })
       .then((resp) => {
@@ -146,8 +146,8 @@ describe('POST /users', () => {
         expect(typeof json._id).toBe('string');
         expect(typeof json.email).toBe('string');
         expect(typeof json.password).toBe('undefined');
-        expect(typeof json.role).toBe('string');
-        expect(json.role).toBe("admin");
+        expect(typeof json.roles).toBe('string');
+        expect(json.roles).toBe("admin");
       })
   ));
 
@@ -184,7 +184,7 @@ describe('PUT /users/:uid', () => {
   it('should fail with 403 when not admin tries to change own role', () => (
     fetchAsTestUser('/users/test@test.test', {
       method: 'PUT',
-      body: { role: "admin" },
+      body: { roles: "admin" },
     })
       .then((resp) => expect(resp.status).toBe(403))
   ));
