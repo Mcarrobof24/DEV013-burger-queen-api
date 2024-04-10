@@ -1,4 +1,5 @@
 const { connect } = require ("../connect");
+const bcrypt = require('bcrypt');
 const { ObjectId } = require ("mongodb");
 
 module.exports = {
@@ -45,16 +46,73 @@ module.exports = {
       }
 
       //Crear nuevo usuario
-      const createNewUser= await collection.insertOne(req.body);
+      const userData = {
+        email: email,
+        password: bcrypt.hashSync(password, 10),
+        roles: roles,
+      };
+      const createNewUser= await collection.insertOne(userData);
       console.log('Nuevo usuario registrado:', createNewUser);
       return resp.status(200).json({message: "Usuario registrado con exito"});
 
     }
     catch(error){
+      console.error(error)
       return resp.status(500).json({message: 'Error del servidor'});
     }
+  }, 
+
+  putUser: async(req, resp)=>{
+    try{
+      const { email, password, roles } = req.body;
+      const { uid } = req.params;
+      const options = { projection: { password: 0 } };
+
+      //Conexion a la base de datos y a la coleccion users
+      const db= await connect();
+      const collection = db.collection("users");
+
+      //Comprobar que el ID 
+      const filter = validateIdAndEmail(uid);
+      /*if(!filter){
+        return resp.status(400).json({message:'ID no es valido'});
+      }*/
+
+      const user = await collection.findOne(filter, options);
+
+      //Comprobar que es usuario exista en la bd
+      if( user === null){
+        return resp.status(404).json({message: 'El usuario no existe'});
+      }
+
+      //Comprobar si es admin
+      if(req.roles !== 'admin'){
+        return resp.status(403).json({message: 'El usuario no tiene permisos para actualizar informacion'})
+      }
+
+
+    }
+    catch(error){
+      console.error(error);
+      return resp.status(500).json({message: 'Error del servidor'});
+    }
+
   }
   
 };
 
-//Validar el email
+//Validar email y id
+
+const validateIdAndEmail= (uid) => {
+  let filter = null;
+  const validateEmail= /^[\w.-]+@[a-zA-Z.-]+\.[a-zA-Z]{2,}$/;
+  const validationId = ObjectId.isValid(uid);
+  if (validateEmail.test(uid)) {
+    filter = { email: uid };
+  } else {
+    if (validationId) {
+      filter = { _id: new ObjectId(uid)};
+    }
+  }
+  return filter;
+};
