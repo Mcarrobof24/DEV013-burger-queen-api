@@ -25,7 +25,7 @@ module.exports = (app, nextMain) => {
 
       //Enviar un error si no se encuentra el usuario
       if(!user){
-        return resp.status(401).json({error: 'Usuario no encontrado'});
+        return resp.status(404).json({error: 'Usuario no encontrado'});
       }
       //Verificar si la contraseña coincide con la base de datos
       const passwordMatch = await bcrypt.compare(password, user.password);
@@ -33,18 +33,17 @@ module.exports = (app, nextMain) => {
       
       //console.log('verifica', passwordMatch);
       if (!passwordMatch){
-        return resp.status(401).json({error: 'Contraseña incorrecta'});
+        return resp.status(404).json({error: 'Contraseña incorrecta'});
       }else{
           //Si las crendenciales son correctas, generar un token JWT
         const token = jwt.sign({ id: user._id, 
           email: user.email, 
           roles: user.roles}, 
-          secret, 
-          {expiresIn: '1h'});
+          secret);
       
         //Enviar el token en la respuesta     
         // If they match, send an access token created with JWT
-        resp.status(200).json({token});
+        return resp.status(200).json({id: user._id, email: user.email, roles: user.roles, token});
       }
     
     } catch(error){
