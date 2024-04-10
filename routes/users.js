@@ -8,7 +8,8 @@ const {
 
 const {
   getUsers,
-  createUser
+  createUser,
+  putUser
 } = require('../controller/users');
 
 
@@ -123,8 +124,7 @@ module.exports = (app, next) => {
     // TODO: Implement the route to add new users
   
 
-  app.put('/users/:uid', requireAuth, (req, resp, next) => {
-  });
+  app.put('/users/:uid', requireAuth, putUser);
 
   app.delete('/users/:uid', requireAuth, (req, resp, next) => {
   });
