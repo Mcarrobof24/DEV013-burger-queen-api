@@ -7,15 +7,15 @@ const { secret } = config;
 
 module.exports = (app, nextMain) => {
 
-  app.post('/login', async (req, resp, next) => {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return next(400);
-    }
+  app.post('/login', async (req, resp) => {
+    
     try{
     // TODO: Authenticate the user
     // It is necessary to confirm if the email and password
+      const { email, password } = req.body;
+      if (!email || !password) {
+        return resp.status(400).json({error: "Introduzca el email y password"});
+      }
       //Conectar a la base de datos
       const db = await connect();
       const collection = db.collection('users');
@@ -32,10 +32,7 @@ module.exports = (app, nextMain) => {
       //console.log(password, user.password);
       
       //console.log('verifica', passwordMatch);
-      if (!passwordMatch){
-        return resp.status(404).json({error: 'Contraseña incorrecta'});
-      }else{
-          //Si las crendenciales son correctas, generar un token JWT
+      if (passwordMatch){
         const token = jwt.sign({ id: user._id, 
           email: user.email, 
           roles: user.roles}, 
@@ -43,7 +40,12 @@ module.exports = (app, nextMain) => {
       
         //Enviar el token en la respuesta     
         // If they match, send an access token created with JWT
-        return resp.status(200).json({id: user._id, email: user.email, roles: user.roles, token});
+        //Si las crendenciales son correctas, generar un token JWT
+        return resp.status(200).json({ok:"Usuario autenticado", token});
+        
+      }else{
+          
+          return resp.status(404).json({error: 'Contraseña incorrecta'});
       }
     
     } catch(error){
@@ -51,8 +53,6 @@ module.exports = (app, nextMain) => {
       resp.status(500).json({error: 'Error interno del servidor'});
     }
  
-   
-
 
     //next();
   });
