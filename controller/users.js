@@ -1,14 +1,8 @@
 const { connect } = require ("../connect");
 const bcrypt = require('bcrypt');
 
-const { ObjectId} = require ("mongodb");
+const { ObjectId } = require ("mongodb");
 const { isAdmin } = require("../middleware/auth");
-
-//Comprobar correo electronico correcto el formato
-const isValidEmail= (email)=>{
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-}
 
 
 module.exports = {
@@ -16,13 +10,9 @@ module.exports = {
   getUsers: async(req, resp, next) => {
     // TODO: Implement the necessary function to fetch the `users` collection or table
     try {
-      //verifico que sea el admin
-      /*if(req.user.roles !== 'admin'){
-        return resp.status(403).json({error:'El usuario no es un administrador'});
-      }*/
+      //Conectar la base de datos y la coleccion user
       const db= await connect();
       const collection = db.collection("users");
-      //const collection = getCollection('users');
       const options = { projection: { password: 0 } };
       const { _limit, _page } = req.query;
       const limit = parseInt(_limit) || 10;
@@ -32,7 +22,8 @@ module.exports = {
       return resp.status(200).json(findResults);
     
     } catch (error) {
-       return resp.status(500).json({error: 'Error del servidor'});
+       resp.status(500).json({error: 'Error del servidor'});
+       next(error);
     }
   },
 
@@ -54,21 +45,23 @@ module.exports = {
         : {email:uid}
       
       const findUser = await collection.findOne(valideId);
-      if(!validateUserOrAdmin(req, uid)){
-        return resp.status(403).json({error: 'El usuario no tiene permisos para ver esta información'});
-      }
-
       if(!findUser){
         return resp.status(404).json({error: "El usuario solicitado no existe"});
       }
-      return resp.status(200).json({ id: _id, email, roles});
+      if(!validateUserOrAdmin(req, findUser._id.toString())){
+        return resp.status(403).json({error: 'El usuario no tiene permisos para ver esta información'});
+      }
+
+     
+      return resp.status(200).json({ id: findUser._id, email: findUser.email, roles: findUser.roles});
     } catch(error) {
-      return resp.status(500).json({message: 'Error del servidor'});
+      resp.status(500).json({message: 'Error del servidor'});
+      next(error);
     }
 
   },
   
-  createUser: async(req, resp) =>{
+  createUser: async(req, resp, next) =>{
     //POST
     try{
       const { email, password, roles } = req.body;
@@ -112,7 +105,8 @@ module.exports = {
     }
     catch(error){
       console.error(error)
-      return resp.status(500).json({message: 'Error del servidor'});
+      resp.status(500).json({message: 'Error del servidor'});
+      next(error);
     }
   }, 
 
@@ -153,42 +147,47 @@ module.exports = {
 
   },
   
-  deleteUsers: async (req, resp)=>{
+  deleteUsers: async (req, resp, next)=>{
     //DELETE
-    try{
-      const { uid } = req.params;
+    try {
       //Conexion a la base de datos y a la coleccion users
-      const db= await connect();
-      const collection = db.collection("user");
-      const filter = validateIdAndEmail(uid);
+      const db = await connect();
+      const collection = db.collection("users");
+      const { uid } = req.params;
+      const isValidObjectId = ObjectId.isValid(uid)
 
+      //Verificar si el usuario tiene los permiso para realizar borrar
+      if (!isAdmin(req)) {
+        return resp.status(403).json({error:"El usuario no tiene permisos para realizar esta tarea"});
+      }
       
-      if(!validateUserOrAdmin(req, uid)){
-        return resp.status(403).json({error: 'El usuario no tiene permisos para ver esta información'});
+      //Verificar si tiene un ID valido
+      let user;
+      if (isValidObjectId) {
+        user = { _id: new ObjectId(uid)};
+      } else if (isValidEmail(uid)) {
+        user = { email: uid };
+      } else {
+        return resp.status(400).json({ error: "ID de usuario inválido" });
       }
-      if (!filter) {
-        return resp
-          .status(400)
-          .json({ error: "El ID de usuario proporcionado no es válido" });
-      }
-      // Buscar el usuario en la base de datos
-      const getUser = await collection.findOne(filter);
-      if (!getUser) {
+
+      //Encontrar el usuario a eliminar
+      const deleteUser = await collection.findOne(user); 
+
+      // Verificar si existe el usuario solicitado en la base de datos
+      if (!deleteUser) {
         return resp.status(404).json({ error: "El Id del usuario no existe" });
       }
-      // Eliminar el usuario de la base de datos
-      const cursor = await collection.deleteOne(getUser);
 
-      return resp
-        .status(200)
-        .json({ message: "Usuario eliminado", usuario: cursor });
+      //Se elimina el usuario de la base de datos
+      const deleted = await collection.deleteOne(deleteUser);
+      resp.status(200).json({ message: "Usuario eliminado exitosamente", userDeleted: deleted });
 
-
-    } catch(error){
-      return resp.status(500).send("Error en el servidor");
+    } catch (error) {
+      resp.status(500).json({message: 'Error del servidor'});
+      next(error);
     }
-  }
-  
+  }  
 };
 
 //Comprobar si es usuario o admin
@@ -200,6 +199,11 @@ const validateUserOrAdmin = (req, uid) => {
   }
   return true;
 };
+//Verificar si el correo electronico tiene un formato correcto
+const isValidEmail= (email)=>{
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
 
 //Validar email y id
 
