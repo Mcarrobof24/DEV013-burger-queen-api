@@ -67,11 +67,10 @@ module.exports = {
       //const isValidObjectId = ObjectId.isValid(uid);
 
       // Comprobar si el usuario es admin
-      if(!isAdmin(req)){
+      if(!isAdmin(req) && uid !== req.id && uid !== req.email){
         return resp.status(403).json({error: "El usuario no tiene permisos para realizar esta tarea"});
       }
-      
-       
+
       //Verificar si el uid es un ObjectId Valido
       const valideId = ObjectId.isValid(uid) 
         ? {_id: new ObjectId(uid)} 
@@ -154,7 +153,7 @@ module.exports = {
       const collection = db.collection("users");
 
       // Comprobar si el usuario es admin
-      if(!isAdmin(req)){
+      if(!isAdmin(req) && uid !== req.id && uid !== req.email){
         return resp.status(403).json({error: "El usuario no tiene permisos para realizar esta tarea"});
       }
 
@@ -178,8 +177,11 @@ module.exports = {
       }
 
       
-      if (!email && !password) {
+      if (!email && !password && !roles) {
         return resp.status(400).json({error: " Por favor ingresar los campos completos para actualizar: email, contraseña, roles",});
+      } 
+      if (!isAdmin(req) && roles) {
+        return resp.status(403).json({message:"No tiene permisos"})
       }
       //Actualiza los datos
       const dataUpdate = {};
@@ -189,6 +191,9 @@ module.exports = {
       if(password){
         const hashPassword = bcrypt.hashSync(password, 10);
         dataUpdate.password = hashPassword;
+      }
+      if(roles){
+        dataUpdate.roles= roles;
       }
       const dataUpdateCollection = await collection.updateOne(userPut, {$set: dataUpdate});
       return resp.status(200).json({message: "Información del usuario actualizada de manera exitosa", data: dataUpdateCollection});
@@ -207,7 +212,8 @@ module.exports = {
       const db = await connect();
       const collection = db.collection("users");
       const { uid } = req.params;
-      const isValidObjectId = ObjectId.isValid(uid)
+      const isValidObjectId = ObjectId.isValid(uid);
+      console.log("esto es el isvalidobjectId", isValidObjectId);
 
       //Verificar si el usuario tiene los permiso para realizar borrar
       if (!isAdmin(req)) {
@@ -218,6 +224,7 @@ module.exports = {
       let user;
       if (isValidObjectId) {
         user = { _id: new ObjectId(uid)};
+        console.log("este es el unser de object", user);
       } else if (isValidEmail(uid)) {
         user = { email: uid };
       } else {
@@ -257,21 +264,5 @@ const isValidEmail= (email)=>{
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 }
-
-//Validar email y id
-
-const validateIdAndEmail= (uid) => {
-  let filter = null;
-  const validateEmail= /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  const validationId = ObjectId.isValid(uid);
-  if (validateEmail.test(uid)) {
-    filter = { email: uid };
-  } else {
-    if (validationId) {
-      filter = {_id: new ObjectId(uid)};
-    }
-  }
-  return filter;
-};
 
 
