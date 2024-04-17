@@ -72,11 +72,12 @@ module.exports = {
       }
 
       //Verificar si el uid es un ObjectId Valido
-      const valideId = ObjectId.isValid(uid) 
+      const isValidObjectId = ObjectId.isValid(uid)
+      //const valideId = ObjectId.isValid(uid) 
         ? {_id: new ObjectId(uid)} 
         : {email:uid}
       
-      const findUser = await collection.findOne(valideId);
+      const findUser = await collection.findOne(isValidObjectId);
       if(!findUser){
         return resp.status(404).json({error: "El usuario solicitado no existe"});
       }
