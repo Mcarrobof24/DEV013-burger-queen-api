@@ -28,10 +28,43 @@ module.exports = {
   },
 
   getUserById: async(req, resp, next) =>{
+
+    //intento dos
+
+    /*try{
+      //Conectar la base de datos y la coleccion user
+      const db = await connect();
+      const collection = db.collection("users");
+      const { uid } = req.params;
+      const isValidObjectId = ObjectId.isValid(uid);
+
+      // Comprobar si el usuario es admin
+      if(!isAdmin(req)){
+        return resp.status(403).json({error: "El usuario no tiene permisos para realizar esta tarea"});
+      }
+
+      /*let user;
+      if(){
+
+      }
+      const findUser = await collection.findOne(isValidObjectId);
+      if(!findUser){
+        return resp.status(404).json({error: "El usuario solicitado no existe"});
+      }
+
+
+
+    } catch (error){
+      resp.status(500).json({message: 'Error del servidor'});
+      next(error);
+    }*/
+
+    //CODIGO ANTERIOR CON ERRORES
     try{
       const db = await connect();
       const collection = db.collection("users");
       const { uid } = req.params;
+      //const isValidObjectId = ObjectId.isValid(uid);
 
       // Comprobar si el usuario es admin
       if(!isAdmin(req)){
@@ -67,7 +100,7 @@ module.exports = {
       const { email, password, roles } = req.body;
       const db= await connect();
       const collection = db.collection("users");
-      const rolesApi= ["admin", "waiter", "chef"];
+      //const rolesApi= ["admin", "waiter", "chef"];
 
       //Comprobar que el usuario ingrese los datos completos
       if(!email || !password){
@@ -76,16 +109,16 @@ module.exports = {
 
       //Comprobar si el usuario ya esta registrado
       const existUser= await collection.findOne({email: email});
-      console.log("usuario existente:", existUser);
+      //console.log("usuario existente:", existUser);
       if(existUser){
         return resp.status(403).json({error:"El usuario ya se encuentra registrado"});
       }
       if (!isValidEmail(email)) {
         return resp.status(400).json({ error: "Correo electrónico inválido" });
       }
-      // Verificar la fortaleza de la contraseña
+      // Verificar si es una contraseña segura
       if (password.length < 5) {
-        return resp.status(400).send("password: mínimo 8 caracteres");
+        return resp.status(400).json({ error: "La contraseña debe tener mínimo 8 caracteres"});
       };
 
       //Crear nuevo usuario
@@ -114,35 +147,55 @@ module.exports = {
     try{
       const { email, password, roles } = req.body;
       const { uid } = req.params;
-      const options = { projection: { password: 0 } };
+      const isValidObjectId = ObjectId.isValid(uid)
 
       //Conexion a la base de datos y a la coleccion users
       const db= await connect();
       const collection = db.collection("users");
 
-      //Comprobar que el ID 
-      const filter = validateIdAndEmail(uid);
-      /*if(!filter){
-        return resp.status(400).json({message:'ID no es valido'});
-      }*/
+      // Comprobar si el usuario es admin
+      if(!isAdmin(req)){
+        return resp.status(403).json({error: "El usuario no tiene permisos para realizar esta tarea"});
+      }
 
-      const user = await collection.findOne(filter, options);
+      //Verificar si tiene un ID valido
+      let userPut;
+      
+      if (isValidEmail(uid)) {
+        userPut = { email: uid };
+      } 
+      else if (isValidObjectId) {
+        userPut = { _id: new ObjectId(uid)};
+      }else {
+        return resp.status(400).json({ error: "ID de usuario no es válido" });
+      }
+      
+      const userUpdate = await collection.findOne(userPut);
 
       //Comprobar que es usuario exista en la bd
-      if( user === null){
+      if( !userUpdate){
         return resp.status(404).json({message: 'El usuario no existe'});
       }
 
-      //Comprobar si es admin
-      if(req.roles !== 'admin'){
-        return resp.status(403).json({message: 'El usuario no tiene permisos para actualizar informacion'})
+      
+      if (!email && !password) {
+        return resp.status(400).json({error: " Por favor ingresar los campos completos para actualizar: email, contraseña, roles",});
       }
-
-
+      //Actualiza los datos
+      const dataUpdate = {};
+      if(email){
+        dataUpdate.email = email;
+      }
+      if(password){
+        const hashPassword = bcrypt.hashSync(password, 10);
+        dataUpdate.password = hashPassword;
+      }
+      const dataUpdateCollection = await collection.updateOne(userPut, {$set: dataUpdate});
+      return resp.status(200).json({message: "Información del usuario actualizada de manera exitosa", data: dataUpdateCollection});
     }
     catch(error){
       console.error(error);
-      return resp.status(500).json({message: 'Error del servidor'});
+      resp.status(500).json({message: 'Error del servidor'});
     }
 
   },
@@ -160,7 +213,7 @@ module.exports = {
       if (!isAdmin(req)) {
         return resp.status(403).json({error:"El usuario no tiene permisos para realizar esta tarea"});
       }
-      
+
       //Verificar si tiene un ID valido
       let user;
       if (isValidObjectId) {
