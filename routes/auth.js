@@ -28,20 +28,25 @@ module.exports = (app, nextMain) => {
         return resp.status(404).json({error: 'Usuario no encontrado'});
       }
       //Verificar si la contraseña coincide con la base de datos
-      const passwordMatch = await bcrypt.compare(password, user.password);
+      const compare = await bcrypt.compare(password, user.password);
       //console.log(password, user.password);
       
       //console.log('verifica', passwordMatch);
-      if (passwordMatch){
-        const token = jwt.sign({ id: user._id, 
-          email: user.email, 
-          roles: user.roles}, 
+      if (compare){
+        const {_id, roles } = user;
+        const token = jwt.sign({ id: _id, 
+          email: email, 
+          roles: roles}, 
           secret);
       
         //Enviar el token en la respuesta     
         // If they match, send an access token created with JWT
         //Si las crendenciales son correctas, generar un token JWT
-        return resp.status(200).json({ok:"Usuario autenticado", token});
+        return resp.status(200).json({token: token, user:{
+          id: _id,
+          email: email,
+          roles: roles,
+        },});
         
       }else{
           
