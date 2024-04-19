@@ -113,6 +113,9 @@ const initAdminUser = async (app, next) => {
  * delegar a requisição para a próxima função na cadeia (invocando next). Dessa
  * forma, a requisição (request) passa através das funções, assim como a resposta
  * (response).
+ *
+ * 
+ * 
  */
 
 module.exports = (app, next) => {
