@@ -1,8 +1,10 @@
+//Importamos las rutas o endpoints auth, usersm products, orders 
 const auth = require('./auth');
 const users = require('./users');
 const products = require('./products');
 const orders = require('./orders');
 
+//Funcion middleware que maneja la ruta raiz
 const root = (app, next) => {
   const pkg = app.get('pkg');
   app.get('/', (req, res) => res.json({ name: pkg.name, version: pkg.version }));

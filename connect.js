@@ -1,6 +1,6 @@
 const config = require('./config');
 const {MongoClient} =require('mongodb');
-
+//se pasa la url de la BD 
 const client = new MongoClient(config.dbUrl);
 
 // eslint-disable-next-line no-unused-vars
@@ -9,9 +9,11 @@ const client = new MongoClient(config.dbUrl);
 async function connect() {
   // TODO: Database Connection
   try{
+    //Conecta a MONGODB
     await client.connect();
-    const db= client.db('Colegios');
-    console.log("conexion correct")
+    //Se coloca el nombre de la BD
+    const db= client.db('burger_queen');
+    console.log("conexion correcta");
     return db;
 
   } catch(error){
